@@ -1,26 +1,52 @@
-﻿#include <iostream>
+#include <iostream>
 #include <vector>
-#include <sstream>
+#include <string>
+#include <algorithm>
 
 class MapBase
 {
+private:
+    
+    virtual ~MapBase() {}
 public:
-    virtual MapBase* create() = 0;
-    virtual ~MapBase() = 0;
+    virtual bool find(const std::string&) = 0;
+    virtual void print() = 0;
+
 };
+
+template <typename Key, typename Value>
+class DataAccessor 
+{
+private:
+    virtual Key& first() = 0;
+public:
+    Key& firstDA()
+    {
+        return dynamic_cast<Key>(first);
+    };
+
+    
+    
+    
+    
+};
+
+
+
 
 template <typename Key, typename Value>
 class Map : public MapBase
 {
 private:
+    
     Key key;
     Value value;
 
-    
+
 public:
-    Map() {}
-    
-    explicit Map(const Key& _key, const Value& _value) : key{ _key }, value{ _value } {}
+    //Map() {}
+
+    Map(const Key& _key, const Value& _value) : key{ _key }, value{ _value } {}
 
     Map(const Map& _map)
     {
@@ -38,55 +64,170 @@ public:
         return *this;
     }
 
-    MapBase* create() 
+    
+    Key& first() override
     {
-        
-            std::cout << "Key Value: ";
-            std::string keyValue, stub;
-            std::cin >> keyValue;
-
-            std::stringstream ss;
-            ss >> key >> stub >> value;
-            ss.clear();
-
-            return { key, value };
-        
+        return key;
     }
 
-    friend class Registry;
+    Value& second()
+    {
+        return value;
+    }
 
-    ~Map() {};
+    bool find(const std::string& key) override
+    {
+        return std::to_string(this->key) == key;
+    }
+
+    void print()
+    {
+        std::cout << "Key: " << key << ", Value: " << value << '\n';
+    }
+    //std::ostringstream& out(std::ostringstream& os) { os << key << value; std::return os; }
+
+    virtual ~Map() {};
 };
 
 class Registry
 {
 private:
+    
     std::vector<MapBase*> maps;
+    
 public:
-    void add()
+    template <typename Key, typename Value>
+    void add(const Key key, const Value value)
     {
-        while (true)
+        
+        maps.push_back(new Map(key, value));
+    }
+
+    template <typename Key>
+    void remove(const Key& key)
+    {
+       
+        maps.erase(std::remove_if(maps.begin(), maps.end(), 
+            [=](auto elem)
+            { 
+                return elem->find(std::to_string(key));
+            }), 
+            maps.end());
+            
+        
+    }
+
+    template <typename Key>
+    void find(const Key& key)
+    {
+        for (const auto& elem : maps)
         {
-            
-            Map* map{ 1, 1.0 };
-            
-            maps.push_back(map->create());
+            bool found = elem->find(std::to_string(key));
+            if (found) elem->print();
 
-            std::cout << "\nExit - 0: ";
-            int ex;
-            std::cin >> ex;
-
-            if (!ex) break;
         }
+    }
+
+    void print()
+    {
+        for (const auto& elem : maps)
+        {
+            elem->print();
+                elem
+            
+        }
+    }
+
+    void test()
+    {
+        
     }
 };
 
+/*auto inputAndConvert()
+{
+    std::cout << "Key and value, (qwerty 123456): ";
+
+    std::string generalType{}, keyType, valueType;
+    std::string key, value;
+    std::string tmp;
+
+    for (int k{}; k < 3; ++k)
+    {
+        for (int i{ 1 }; i <= 2; ++i)
+        {
+            std::cin >> tmp;
+
+            const std::string::size_type isPoint = tmp.find('.');
+
+            if (isPoint == std::string::npos)
+            {
+                try
+                {
+                    return std::stoi(tmp);
+                    generalType = "int";
+                }
+                catch (const std::exception&) {}
+            }
+            else if (isPoint != std::string::npos)
+            {
+                try
+                {
+                    return std::stod(tmp);
+                    generalType = "double";
+                }
+                catch (const std::exception&) {}
+            }
+
+            if (generalType == "") generalType = "std::string";
+
+            if (i == 1)
+            {
+                keyType = generalType;
+                return tmp;
+            }
+            else
+            {
+                valueType = generalType;
+                value = tmp;
+            }
+
+            generalType = "";
+        }
+}*/
 
 int main()
 {
     Registry reg;
-    reg.add();
+    //reg.add();
+
+    
+
+    
+
+        /*std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
+
+        std::cout << keyType << ' ' << valueType;
 
 
 
+        if (keyType == "int")
+        {
+            if (valueType == "int") reg.add(new Map(std::stoi(key), std::stoi(value)));
+            else if (valueType == "double") reg.add(new Map(std::stoi(key), std::stod(value)));
+            else reg.add(new Map(std::stoi(key), value));
+        }*/
+
+    
+
+    reg.add(1, "qqq");
+    reg.add(2, 'w');
+    reg.add(3, "e");
+    reg.print();
+    reg.remove(2);
+    reg.print();
+    reg.find(3);
+
+   
 }
