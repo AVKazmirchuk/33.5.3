@@ -2,34 +2,26 @@
 #include <vector>
 #include <string>
 #include <algorithm>
+#include <typeindex>
+
+template <typename Key, typename Value>
+class Map;
+
 
 class MapBase
 {
 private:
-    
+
     virtual ~MapBase() {}
 public:
     virtual bool find(const std::string&) = 0;
     virtual void print() = 0;
 
+    virtual const std::type_index& typeKey() const = 0;
+    virtual const std::type_index& typeValue() const = 0;
 };
 
-template <typename Key, typename Value>
-class DataAccessor 
-{
-private:
-    virtual Key& first() = 0;
-public:
-    Key& firstDA()
-    {
-        return dynamic_cast<Key>(first);
-    };
 
-    
-    
-    
-    
-};
 
 
 
@@ -38,7 +30,7 @@ template <typename Key, typename Value>
 class Map : public MapBase
 {
 private:
-    
+
     Key key;
     Value value;
 
@@ -64,8 +56,21 @@ public:
         return *this;
     }
 
-    
-    Key& first() override
+    MapBase* get() override
+    {
+        return this;
+    }
+
+    const std::type_index& typeKey() const override
+    {
+        return typeid(key);
+    }
+    const std::type_index& typeValue() const override
+    {
+        return typeid(value);
+    }
+
+    Key& first()
     {
         return key;
     }
@@ -94,27 +99,27 @@ class Registry
 private:
     
     std::vector<MapBase*> maps;
-    
+
 public:
     template <typename Key, typename Value>
     void add(const Key key, const Value value)
     {
-        
+
         maps.push_back(new Map(key, value));
     }
 
     template <typename Key>
     void remove(const Key& key)
     {
-       
-        maps.erase(std::remove_if(maps.begin(), maps.end(), 
+
+        maps.erase(std::remove_if(maps.begin(), maps.end(),
             [=](auto elem)
-            { 
+            {
                 return elem->find(std::to_string(key));
-            }), 
+            }),
             maps.end());
-            
-        
+
+
     }
 
     template <typename Key>
@@ -133,14 +138,16 @@ public:
         for (const auto& elem : maps)
         {
             elem->print();
-                elem
-            
+            const std::type_index Key = elem->typeKey();
+            const std::type_index Value = elem->typeValue();
+            std::cout << dynamic_cast<Map<((elem)->typeKey())::  , Value>*>(elem)->first();
+                
         }
     }
 
     void test()
     {
-        
+
     }
 };
 
@@ -201,9 +208,9 @@ int main()
     Registry reg;
     //reg.add();
 
-    
 
-    
+
+
 
         /*std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
@@ -219,7 +226,7 @@ int main()
             else reg.add(new Map(std::stoi(key), value));
         }*/
 
-    
+
 
     reg.add(1, "qqq");
     reg.add(2, 'w');
@@ -229,5 +236,5 @@ int main()
     reg.print();
     reg.find(3);
 
-   
+
 }
