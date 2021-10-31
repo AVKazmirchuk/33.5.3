@@ -4,25 +4,16 @@
 #include <algorithm>
 #include <typeindex>
 
-template <typename Key, typename Value>
-class Map;
 
 
 class MapBase
 {
-private:
-
-    virtual ~MapBase() {}
 public:
     virtual bool find(const std::string&) = 0;
     virtual void print() = 0;
-
-    virtual const std::type_index& typeKey() const = 0;
-    virtual const std::type_index& typeValue() const = 0;
+        
+    virtual ~MapBase() {}
 };
-
-
-
 
 
 
@@ -30,14 +21,9 @@ template <typename Key, typename Value>
 class Map : public MapBase
 {
 private:
-
     Key key;
     Value value;
-
-
 public:
-    //Map() {}
-
     Map(const Key& _key, const Value& _value) : key{ _key }, value{ _value } {}
 
     Map(const Map& _map)
@@ -55,112 +41,76 @@ public:
 
         return *this;
     }
-
-    MapBase* get() override
-    {
-        return this;
-    }
-
-    const std::type_index& typeKey() const override
-    {
-        return typeid(key);
-    }
-    const std::type_index& typeValue() const override
-    {
-        return typeid(value);
-    }
-
-    Key& first()
-    {
-        return key;
-    }
-
-    Value& second()
-    {
-        return value;
-    }
-
+   
     bool find(const std::string& key) override
     {
-        return std::to_string(this->key) == key;
+        if constexpr (std::is_same_v<decltype(this->key), std::string>) return this->key == key;
+        else return std::to_string(this->key) == key;
     }
 
     void print()
     {
         std::cout << "Key: " << key << ", Value: " << value << '\n';
     }
-    //std::ostringstream& out(std::ostringstream& os) { os << key << value; std::return os; }
-
-    virtual ~Map() {};
+    
+    ~Map() {};
 };
 
 class Registry
 {
 private:
-    
+
     std::vector<MapBase*> maps;
 
 public:
     template <typename Key, typename Value>
-    void add(const Key key, const Value value)
+    void add(Key&& key, Value&& value)
     {
-
         maps.push_back(new Map(key, value));
     }
 
     template <typename Key>
     void remove(const Key& key)
     {
-
         maps.erase(std::remove_if(maps.begin(), maps.end(),
             [=](auto elem)
             {
                 return elem->find(std::to_string(key));
             }),
             maps.end());
-
-
     }
 
     template <typename Key>
     void find(const Key& key)
     {
+        std::string tmp;
+        
+        if (typeid(Key) != typeid(std::string)) tmp = std::to_string(key);
+        else tmp = key;
+
         for (const auto& elem : maps)
         {
-            bool found = elem->find(std::to_string(key));
-            if (found) elem->print();
-
+            if (elem->find(tmp)) elem->print();
         }
     }
-
+    
     void print()
     {
         for (const auto& elem : maps)
         {
             elem->print();
-            const std::type_index Key = elem->typeKey();
-            const std::type_index Value = elem->typeValue();
-            std::cout << dynamic_cast<Map<((elem)->typeKey())::  , Value>*>(elem)->first();
-                
         }
-    }
-
-    void test()
-    {
-
     }
 };
 
-/*auto inputAndConvert()
+void inputAndConvert(std::string& keyType, std::string& key, std::string& valueType, std::string& value)
 {
     std::cout << "Key and value, (qwerty 123456): ";
 
-    std::string generalType{}, keyType, valueType;
-    std::string key, value;
+    std::string generalType{};
     std::string tmp;
 
-    for (int k{}; k < 3; ++k)
-    {
+    
         for (int i{ 1 }; i <= 2; ++i)
         {
             std::cin >> tmp;
@@ -171,8 +121,9 @@ public:
             {
                 try
                 {
-                    return std::stoi(tmp);
+                    std::stoi(tmp);
                     generalType = "int";
+                    
                 }
                 catch (const std::exception&) {}
             }
@@ -180,8 +131,9 @@ public:
             {
                 try
                 {
-                    return std::stod(tmp);
+                    std::stod(tmp);
                     generalType = "double";
+                    
                 }
                 catch (const std::exception&) {}
             }
@@ -191,7 +143,7 @@ public:
             if (i == 1)
             {
                 keyType = generalType;
-                return tmp;
+                key = tmp;
             }
             else
             {
@@ -201,40 +153,69 @@ public:
 
             generalType = "";
         }
-}*/
+    
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+}
 
 int main()
 {
+    std::string keyType, key, valueType, value;
+
     Registry reg;
-    //reg.add();
 
+    for (int k{}; k < 3; ++k)
+    {
+        inputAndConvert(keyType, key, valueType, value);
 
-
-
-
-        /*std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-
-        std::cout << keyType << ' ' << valueType;
-
-
+        std::cout << keyType << key << valueType << value;
+        
+        std::cout << "qqq";
+        
 
         if (keyType == "int")
         {
-            if (valueType == "int") reg.add(new Map(std::stoi(key), std::stoi(value)));
-            else if (valueType == "double") reg.add(new Map(std::stoi(key), std::stod(value)));
-            else reg.add(new Map(std::stoi(key), value));
-        }*/
+            if (valueType == "int") reg.add(std::stoi(key), std::stoi(value));
+            else if (valueType == "double") reg.add(std::stoi(key), std::stod(value));
+            else reg.add(std::stoi(key), value);
+        }
+        else if (keyType == "double")
+        {
+            if (valueType == "int") reg.add(std::stod(key), std::stoi(value));
+            else if (valueType == "double") reg.add(std::stod(key), std::stod(value));
+            else reg.add(std::stod(key), value);
+        }
+        else if (keyType == "std::string")
+        {
+            if (valueType == "int") reg.add(key, std::stoi(value));
+            else if (valueType == "double") reg.add(key, std::stod(value));
+            else reg.add(key, value);
+        }
+
+    }
+
+    reg.print();
+    reg.remove(2);
+    reg.print();
+    reg.find(3);
+    
+    
+    
 
 
 
-    reg.add(1, "qqq");
+
+
+       
+
+
+
+    /*reg.add(1, "qqq");
     reg.add(2, 'w');
     reg.add(3, "e");
     reg.print();
     reg.remove(2);
     reg.print();
-    reg.find(3);
+    reg.find(3);*/
 
 
 }
