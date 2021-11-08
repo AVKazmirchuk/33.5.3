@@ -154,27 +154,38 @@ public:
 //Определение типа вводимого значения
 void convert(const std::string& tmp, std::string& generalType)
 {
-    const std::string::size_type isPoint = tmp.find('.');
+    auto pos = std::find_if_not(tmp.begin(), tmp.end(), 
+        [](auto elem)
+        {
+            return elem >= 0 && elem <= 9;
+        });
 
-    if (isPoint == std::string::npos)
+    if (pos == tmp.end())
     {
         try
         {
             std::stoi(tmp);
             generalType = "int";
-
         }
         catch (const std::exception&) {}
     }
-    else if (isPoint != std::string::npos)
+    else
     {
-        try
-        {
-            std::stod(tmp);
-            generalType = "double";
+        auto pos = std::find_if_not(tmp.begin(), tmp.end(),
+            [](auto elem)
+            {
+                return elem >= 0 && elem <= 9 && elem == '.';
+            });
 
+        if (pos == tmp.end())
+        {
+            try
+            {
+                std::stod(tmp);
+                generalType = "double";
+            }
+            catch (const std::exception&) {}
         }
-        catch (const std::exception&) {}
     }
 
     if (generalType == "") generalType = "std::string";
