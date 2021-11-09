@@ -2,7 +2,6 @@
 #include <vector>
 #include <string>
 #include <algorithm>
-#include <typeindex>
 #include <conio.h>
 
 
@@ -13,7 +12,10 @@ private:
     class MapBase
     {
     public:
-        virtual bool find(const std::string&) = 0;
+        virtual const bool find(const int&) const = 0;
+        virtual const bool find(const double&) const = 0;
+        virtual const bool find(const std::string&) const = 0;
+        
         virtual void print() = 0;
 
         virtual const std::type_info& keyType() const = 0;
@@ -30,40 +32,51 @@ private:
         Value value;
     public:
         Map(const Key& _key, const Value& _value) : key{ _key }, value{ _value } {}
-
-        Map(const Map& _map)
+                
+        //Определение совпадение ключа при условии равенства типов ключей
+        bool const find(const int& key) const override
         {
-            key = _map.key;
-            value = _map.value;
+            if constexpr (std::is_same_v<Key, int>)
+            {
+                if (this->key == key) return true;
+                else return false;
+            }
+            else return false;
         }
 
-        Map& operator=(const Map& _map)
+        bool const find(const double& key) const override
         {
-            if (this == &_map) return *this;
-
-            key = _map.key;
-            value = _map.value;
-
-            return *this;
+            if constexpr (std::is_same_v<Key, double>)
+            {
+                if (this->key == key) return true;
+                else return false;
+            }
+            else return false;
         }
         
-        //Определение, присутствует ли искомое значение
-        bool find(const std::string& key) override
+        bool const find(const std::string& key) const override
         {
-            if constexpr (std::is_same_v<Key, std::string>) return this->key == key;
-            else return std::to_string(this->key) == key;
+            if constexpr (std::is_same_v<Key, std::string>)
+            {
+                if (this->key == key) return true;
+                else return false;
+            }
+            else return false;
         }
 
-        void print()
+        //Вывод элемента
+        void print() override
         {
             std::cout << "Key: " << key << ", Value: " << value << '\n';
         }
 
+        //Определение типа ключа
         const std::type_info& keyType() const override
         {
             return typeid(key);
         }
 
+        //Определение типа значения
         const std::type_info& valueType() const override
         {
             return typeid(value);
@@ -71,17 +84,7 @@ private:
     };
 
     std::vector<MapBase*> maps;
-
-    std::string tmp;
-
-    //Конвертация типа ключа в std::string для дальнейшего поиска
-    template <typename Key>
-    void transform(const Key& key)
-    {
-        if constexpr (!std::is_same_v<std::decay_t<Key>, std::string>) tmp = std::to_string(key);
-        else tmp = key;
-    }
-
+    
 public:
     template <typename Key, typename Value>
     void add(const Key& key, const Value& value)
@@ -103,27 +106,25 @@ public:
         }
     }
 
+    //Удаление элемента по ключу
     template <typename Key>
     void remove(const Key& key)
     {
-        transform(key);
-
         maps.erase(std::remove_if(maps.begin(), maps.end(),
             [&](auto& elem)
             {
-                return elem->find(tmp);
+                return elem->find(key);
             }),
             maps.end());
     }
 
+    //Поиск значения по ключу и вывод элемента
     template <typename Key>
     void find(const Key& key)
     {
-        transform(key);
-
         for (const auto& elem : maps)
         {
-            if (elem->find(tmp)) elem->print();
+            if (elem->find(key)) elem->print();
         }
     }
 
@@ -131,17 +132,16 @@ public:
     template <typename Key, typename Value>
     void changeValue(const Key& key, const Value& value)
     {
-        transform(key);
-
         for (auto& elem : maps)
         {
-            if (elem->find(tmp) && elem->valueType() == typeid(Value))
+            if (elem->valueType() == typeid(Value) && elem->find(key))
             {
                 dynamic_cast<Map<Key, Value>*>(elem)->value = value;
             }
         }
     }
 
+    //Вывод на печать
     void print()
     {
         for (const auto& elem : maps)
@@ -151,15 +151,25 @@ public:
     }
 };
 
-//Определение типа вводимого значения
-void convert(const std::string& tmp, std::string& generalType)
+
+
+//Вывод на печать
+void print(Registry& reg)
 {
-    auto pos = std::find_if_not(tmp.begin(), tmp.end(), 
+    reg.print();
+}
+
+//Определение типа вводимого значения
+void defineType(const std::string& tmp, std::string& generalType)
+{
+    //Поиск символов в строке отличных от 0 до 9
+    auto pos = std::find_if_not(tmp.begin(), tmp.end(),
         [](auto elem)
         {
             return elem >= 0 && elem <= 9;
         });
 
+    //Это целое число
     if (pos == tmp.end())
     {
         try
@@ -171,12 +181,14 @@ void convert(const std::string& tmp, std::string& generalType)
     }
     else
     {
+        //Поиск символов в строке отличных от 0 до 9 и .
         auto pos = std::find_if_not(tmp.begin(), tmp.end(),
             [](auto elem)
             {
                 return elem >= 0 && elem <= 9 && elem == '.';
             });
 
+        //Это дробное число
         if (pos == tmp.end())
         {
             try
@@ -188,7 +200,10 @@ void convert(const std::string& tmp, std::string& generalType)
         }
     }
 
+    //Это строка
     if (generalType == "") generalType = "std::string";
+
+    std::cout << generalType;
 }
 
 void input(std::string& keyType, std::string& key, std::string& valueType, std::string& value)
@@ -203,7 +218,7 @@ void input(std::string& keyType, std::string& key, std::string& valueType, std::
 
         std::cin >> tmp;
 
-        convert(tmp, generalType);
+        defineType(tmp, generalType);
 
         if (i == 1)
         {
@@ -220,18 +235,6 @@ void input(std::string& keyType, std::string& key, std::string& valueType, std::
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
-void message()
-{
-    std::cout << "\n\nMenu:\n\n";
-
-    std::cout << "add (1) - add an element with a key\n";
-    std::cout << "remove (2) - delete an item by key\n";
-    std::cout << "print (3) - print all the elements with their keys on the screen\n";
-    std::cout << "find (4) - find an element by key\n";
-    std::cout << "change (5) - change values by key\n";
-    std::cout << "exit (0) - exit the program\n\n";
-}
-
 void add(Registry& reg)
 {
     std::string keyType, key, valueType, value;
@@ -239,7 +242,7 @@ void add(Registry& reg)
     for (;;)
     {
         input(keyType, key, valueType, value);
-        
+
         //Конвертация в типы на основании определёных типов при вводе
         if (keyType == "int")
         {
@@ -267,41 +270,12 @@ void add(Registry& reg)
     }
 }
 
-void print(Registry& reg)
-{
-    reg.print();
-}
-
-void remove(Registry& reg)
-{
-    std::cout << "\nEnter the key to delete the item: ";
-
-    std::string key;
-    std::cin >> key;
-
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-    reg.remove(key);
-}
-
-void find(Registry& reg)
-{
-    std::cout << "\nEnter the key to search for the item: ";
-
-    std::string key;
-    std::cin >> key;
-
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-
-    reg.find(key);
-}
-
 void changeValue(Registry& reg)
 {
     std::cout << "\nEnter a key and a new value to change the old value\n";
-    
+
     std::string keyType, key, valueType, value;
-    
+
     input(keyType, key, valueType, value);
 
     //Конвертация в типы на основании определёных типов при вводе
@@ -323,6 +297,81 @@ void changeValue(Registry& reg)
         else if (valueType == "double") reg.changeValue(key, std::stod(value));
         else reg.changeValue(key, value);
     }
+}
+
+void input(std::string& keyType, std::string& key)
+{
+    std::string tmp;
+
+    std::string generalType{};
+
+    std::cin >> tmp;
+
+    //Определение типа ключа
+    defineType(tmp, generalType);
+
+    keyType = generalType;
+    key = tmp;
+
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+}
+
+void remove(Registry& reg)
+{
+    std::cout << "\nEnter the key to delete the item: ";
+
+    std::string keyType;
+    std::string key;
+
+    input(keyType, key);
+
+    //Определение типа ключа
+    defineType(keyType, key);
+
+    //Конвертация в типы на основании определёных типов при вводе
+    if (keyType == "int")
+        reg.remove(std::stoi(key));
+    
+    else if (keyType == "double")
+             reg.remove(std::stod(key));
+    
+    else if (keyType == "std::string")
+             reg.remove(key);
+}
+
+void find(Registry& reg)
+{
+    std::cout << "\nEnter the key to search for the item: ";
+
+    std::string keyType;
+    std::string key;
+
+    input(keyType, key);
+
+    //Определение типа ключа
+    defineType(keyType, key);
+
+    //Конвертация в типы на основании определёных типов при вводе
+    if (keyType == "int")
+        reg.find(std::stoi(key));
+
+    else if (keyType == "double")
+        reg.find(std::stod(key));
+
+    else if (keyType == "std::string")
+        reg.find(key);
+}
+
+void message()
+{
+    std::cout << "\n\nMenu:\n\n";
+
+    std::cout << "add (1) - add an element with a key\n";
+    std::cout << "remove (2) - delete an item by key\n";
+    std::cout << "print (3) - print all the elements with their keys on the screen\n";
+    std::cout << "find (4) - find an element by key\n";
+    std::cout << "change (5) - change values by key\n";
+    std::cout << "exit (0) - exit the program\n\n";
 }
 
 int main()
