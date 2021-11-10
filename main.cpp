@@ -6,150 +6,7 @@
 
 
 
-class Registry
-{
-private:
-    class MapBase
-    {
-    public:
-        virtual const bool find(const int&) const = 0;
-        virtual const bool find(const double&) const = 0;
-        virtual const bool find(const std::string&) const = 0;
-        
-        virtual void print() = 0;
-
-        virtual const std::type_info& keyType() const = 0;
-        virtual const std::type_info& valueType() const = 0;
-
-        virtual ~MapBase() {}
-    };
-
-    template <typename Key, typename Value>
-    class Map : public MapBase
-    {
-    public:
-        const Key key;
-        Value value;
-    public:
-        Map(const Key& _key, const Value& _value) : key{ _key }, value{ _value } {}
-                
-        //Определение совпадение ключа при условии равенства типов ключей
-        bool const find(const int& key) const override
-        {
-            if constexpr (std::is_same_v<Key, int>)
-            {
-                if (this->key == key) return true;
-                else return false;
-            }
-            else return false;
-        }
-
-        bool const find(const double& key) const override
-        {
-            if constexpr (std::is_same_v<Key, double>)
-            {
-                if (this->key == key) return true;
-                else return false;
-            }
-            else return false;
-        }
-        
-        bool const find(const std::string& key) const override
-        {
-            if constexpr (std::is_same_v<Key, std::string>)
-            {
-                if (this->key == key) return true;
-                else return false;
-            }
-            else return false;
-        }
-
-        //Вывод элемента
-        void print() override
-        {
-            std::cout << "Key: " << key << ", Value: " << value << '\n';
-        }
-
-        //Определение типа ключа
-        const std::type_info& keyType() const override
-        {
-            return typeid(key);
-        }
-
-        //Определение типа значения
-        const std::type_info& valueType() const override
-        {
-            return typeid(value);
-        }
-    };
-
-    std::vector<MapBase*> maps;
-    
-public:
-    template <typename Key, typename Value>
-    void add(const Key& key, const Value& value)
-    {
-        maps.push_back(new Map(key, value));
-    }
-
-    template <typename Key, typename Value>
-    void add(Key&& key, Value&& value)
-    {
-        maps.push_back(new Map(key, value));
-    }
-
-    ~Registry()
-    {
-        for (auto& elem : maps)
-        {
-            delete elem;
-        }
-    }
-
-    //Удаление элемента по ключу
-    template <typename Key>
-    void remove(const Key& key)
-    {
-        maps.erase(std::remove_if(maps.begin(), maps.end(),
-            [&](auto& elem)
-            {
-                return elem->find(key);
-            }),
-            maps.end());
-    }
-
-    //Поиск значения по ключу и вывод элемента
-    template <typename Key>
-    void find(const Key& key)
-    {
-        for (const auto& elem : maps)
-        {
-            if (elem->find(key)) elem->print();
-        }
-    }
-
-    //Изменение значения по ключу, при условии совпадения старого и нового типа значения
-    template <typename Key, typename Value>
-    void changeValue(const Key& key, const Value& value)
-    {
-        for (auto& elem : maps)
-        {
-            if (elem->valueType() == typeid(Value) && elem->find(key))
-            {
-                dynamic_cast<Map<Key, Value>*>(elem)->value = value;
-            }
-        }
-    }
-
-    //Вывод на печать
-    void print()
-    {
-        for (const auto& elem : maps)
-        {
-            elem->print();
-        }
-    }
-};
+#include "Header.h"
 
 
 
@@ -162,48 +19,78 @@ void print(Registry& reg)
 //Определение типа вводимого значения
 void defineType(const std::string& tmp, std::string& generalType)
 {
-    //Поиск символов в строке отличных от 0 до 9
-    auto pos = std::find_if_not(tmp.begin(), tmp.end(),
-        [](auto elem)
+    //Является ли строка числом
+    bool isNumber = std::all_of(tmp.begin(), tmp.end(),
+        [](auto& elem)
         {
-            return elem >= 0 && elem <= 9;
+            return (elem >= '0' && elem <= '9' || elem == '.');
         });
 
-    //Это целое число
-    if (pos == tmp.end())
+    //Это возможно не число 
+    if (!isNumber)
+    {
+        generalType = "std::string"; 
+        std::cout << generalType;
+        return;
+    }
+
+    //Является ли число целым
+    bool isInteger = std::all_of(tmp.begin(), tmp.end(),
+        [](auto& elem)
+        {
+            return (elem >= '0' && elem <= '9');
+        });
+
+    //Это возможно целое число
+    if (isInteger)
     {
         try
         {
             std::stoi(tmp);
             generalType = "int";
+            std::cout << generalType;
+            return;
         }
         catch (const std::exception&) {}
     }
-    else
-    {
-        //Поиск символов в строке отличных от 0 до 9 и .
-        auto pos = std::find_if_not(tmp.begin(), tmp.end(),
-            [](auto elem)
-            {
-                return elem >= 0 && elem <= 9 && elem == '.';
-            });
+   
+   //В строке может быть несколько символов "."
+   //Поиск первого символа "."
+   auto pointPosFirst = std::find_if(tmp.begin(), tmp.end(),
+       [](auto& elem)
+       {
+           return elem == '.';
+       });
 
-        //Это дробное число
-        if (pos == tmp.end())
-        {
-            try
-            {
-                std::stod(tmp);
-                generalType = "double";
-            }
-            catch (const std::exception&) {}
-        }
-    }
+   //Возможно позиция символа "." не последняя
+   std::string::const_iterator pointPosNext = pointPosFirst + 1;
+   if (pointPosNext != tmp.end())
+   {
+       //Поиск второго символа "."
+       pointPosNext = std::find_if(pointPosNext, tmp.end(),
+           [](auto& elem)
+           {
+               return elem == '.';
+           });
+   }
 
-    //Это строка
-    if (generalType == "") generalType = "std::string";
+   //Возможно в строке присутствует второй символ "."
+   //Возможно это дробное число
+   if (pointPosNext == tmp.end())
+   {
+       try
+       {
+           std::stod(tmp);
+           generalType = "double";
+           std::cout << generalType;
+           return;
+       }
+       catch (const std::exception&) {}
+   }
 
-    std::cout << generalType;
+   generalType = "std::string";
+   std::cout << generalType;
+   return;
 }
 
 void input(std::string& keyType, std::string& key, std::string& valueType, std::string& value)
@@ -307,13 +194,13 @@ void input(std::string& keyType, std::string& key)
 
     std::cin >> tmp;
 
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
     //Определение типа ключа
     defineType(tmp, generalType);
 
     keyType = generalType;
     key = tmp;
-
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
 void remove(Registry& reg)
@@ -325,18 +212,15 @@ void remove(Registry& reg)
 
     input(keyType, key);
 
-    //Определение типа ключа
-    defineType(keyType, key);
-
     //Конвертация в типы на основании определёных типов при вводе
     if (keyType == "int")
         reg.remove(std::stoi(key));
-    
+
     else if (keyType == "double")
-             reg.remove(std::stod(key));
-    
+        reg.remove(std::stod(key));
+
     else if (keyType == "std::string")
-             reg.remove(key);
+        reg.remove(key);
 }
 
 void find(Registry& reg)
@@ -347,9 +231,6 @@ void find(Registry& reg)
     std::string key;
 
     input(keyType, key);
-
-    //Определение типа ключа
-    defineType(keyType, key);
 
     //Конвертация в типы на основании определёных типов при вводе
     if (keyType == "int")
