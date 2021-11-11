@@ -30,7 +30,6 @@ void defineType(const std::string& tmp, std::string& generalType)
     if (!isNumber)
     {
         generalType = "std::string"; 
-        std::cout << generalType;
         return;
     }
 
@@ -48,7 +47,6 @@ void defineType(const std::string& tmp, std::string& generalType)
         {
             std::stoi(tmp);
             generalType = "int";
-            std::cout << generalType;
             return;
         }
         catch (const std::exception&) {}
@@ -82,14 +80,12 @@ void defineType(const std::string& tmp, std::string& generalType)
        {
            std::stod(tmp);
            generalType = "double";
-           std::cout << generalType;
            return;
        }
        catch (const std::exception&) {}
    }
 
    generalType = "std::string";
-   std::cout << generalType;
    return;
 }
 
