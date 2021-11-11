@@ -19,8 +19,13 @@ void print(Registry& reg)
 //Определение типа вводимого значения
 void defineType(const std::string& tmp, std::string& generalType)
 {
+    //Если первый символ "+" или "-", тогда начало диапазона поиска начинается со второго символа
+    std::string::const_iterator begSecond = tmp.begin();
+    
+    if (tmp[0] == '+' || tmp[0] == '-') begSecond = tmp.begin() + 1;
+    
     //Является ли строка числом
-    bool isNumber = std::all_of(tmp.begin(), tmp.end(),
+    bool isNumber = std::all_of(begSecond, tmp.end(),
         [](auto& elem)
         {
             return (elem >= '0' && elem <= '9' || elem == '.');
@@ -34,7 +39,7 @@ void defineType(const std::string& tmp, std::string& generalType)
     }
 
     //Является ли число целым
-    bool isInteger = std::all_of(tmp.begin(), tmp.end(),
+    bool isInteger = std::all_of(begSecond, tmp.end(),
         [](auto& elem)
         {
             return (elem >= '0' && elem <= '9');
@@ -54,7 +59,7 @@ void defineType(const std::string& tmp, std::string& generalType)
    
    //В строке может быть несколько символов "."
    //Поиск первого символа "."
-   auto pointPosFirst = std::find_if(tmp.begin(), tmp.end(),
+   auto pointPosFirst = std::find_if(begSecond, tmp.end(),
        [](auto& elem)
        {
            return elem == '.';
