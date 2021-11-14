@@ -35,7 +35,7 @@ private:
     public:
         Map(const Key& _key, const Value& _value) : key{ _key }, value{ _value } {}
 
-        //Îïðåäåëåíèå ñîâïàäåíèå êëþ÷à ïðè óñëîâèè ðàâåíñòâà òèïîâ êëþ÷åé
+        //Определение совпадение ключа при условии равенства типов ключей
         bool const find(const int& key) const override;
         
 
@@ -45,19 +45,19 @@ private:
         bool const find(const std::string& key) const override;
         
 
-        //Âûâîä ýëåìåíòà
+        //Вывод элемента
         void print() override
         {
             std::cout << "Key: " << key << ", Value: " << value << '\n';
         }
 
-        //Îïðåäåëåíèå òèïà êëþ÷à
+        //Определение типа ключа
         const std::type_info& keyType() const override
         {
             return typeid(key);
         }
 
-        //Îïðåäåëåíèå òèïà çíà÷åíèÿ
+        //Определение типа значения
         const std::type_info& valueType() const override
         {
             return typeid(value);
@@ -87,7 +87,7 @@ public:
         }
     }
 
-    //Óäàëåíèå ýëåìåíòà ïî êëþ÷ó
+    //Удаление элемента по ключу
     template <typename Key>
     void remove(const Key& key)
     {
@@ -99,7 +99,7 @@ public:
             maps.end());
     }
 
-    //Ïîèñê çíà÷åíèÿ ïî êëþ÷ó è âûâîä ýëåìåíòà
+    //Поиск значения по ключу и вывод элемента
     template <typename Key>
     void find(const Key& key)
     {
@@ -109,7 +109,7 @@ public:
         }
     }
 
-    //Èçìåíåíèå çíà÷åíèÿ ïî êëþ÷ó, ïðè óñëîâèè ñîâïàäåíèÿ ñòàðîãî è íîâîãî òèïà çíà÷åíèÿ
+    //Изменение значения по ключу, при условии совпадения старого и нового типа значения
     template <typename Key, typename Value>
     void changeValue(const Key& key, const Value& value)
     {
@@ -122,7 +122,7 @@ public:
         }
     }
     
-    //Âûâîä íà ïå÷àòü
+    //Вывод на печать
     void print()
     {
         for (const auto& elem : maps)
