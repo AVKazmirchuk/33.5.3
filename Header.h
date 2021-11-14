@@ -35,7 +35,7 @@ private:
     public:
         Map(const Key& _key, const Value& _value) : key{ _key }, value{ _value } {}
 
-        //Определение совпадение ключа при условии равенства типов ключей
+        //ГЋГЇГ°ГҐГ¤ГҐГ«ГҐГ­ГЁГҐ Г±Г®ГўГЇГ Г¤ГҐГ­ГЁГҐ ГЄГ«ГѕГ·Г  ГЇГ°ГЁ ГіГ±Г«Г®ГўГЁГЁ Г°Г ГўГҐГ­Г±ГІГўГ  ГІГЁГЇГ®Гў ГЄГ«ГѕГ·ГҐГ©
         bool const find(const int& key) const override;
         
 
@@ -45,19 +45,19 @@ private:
         bool const find(const std::string& key) const override;
         
 
-        //Вывод элемента
+        //Г‚Г»ГўГ®Г¤ ГЅГ«ГҐГ¬ГҐГ­ГІГ 
         void print() override
         {
             std::cout << "Key: " << key << ", Value: " << value << '\n';
         }
 
-        //Определение типа ключа
+        //ГЋГЇГ°ГҐГ¤ГҐГ«ГҐГ­ГЁГҐ ГІГЁГЇГ  ГЄГ«ГѕГ·Г 
         const std::type_info& keyType() const override
         {
             return typeid(key);
         }
 
-        //Определение типа значения
+        //ГЋГЇГ°ГҐГ¤ГҐГ«ГҐГ­ГЁГҐ ГІГЁГЇГ  Г§Г­Г Г·ГҐГ­ГЁГї
         const std::type_info& valueType() const override
         {
             return typeid(value);
@@ -87,7 +87,7 @@ public:
         }
     }
 
-    //Удаление элемента по ключу
+    //Г“Г¤Г Г«ГҐГ­ГЁГҐ ГЅГ«ГҐГ¬ГҐГ­ГІГ  ГЇГ® ГЄГ«ГѕГ·Гі
     template <typename Key>
     void remove(const Key& key)
     {
@@ -99,7 +99,7 @@ public:
             maps.end());
     }
 
-    //Поиск значения по ключу и вывод элемента
+    //ГЏГ®ГЁГ±ГЄ Г§Г­Г Г·ГҐГ­ГЁГї ГЇГ® ГЄГ«ГѕГ·Гі ГЁ ГўГ»ГўГ®Г¤ ГЅГ«ГҐГ¬ГҐГ­ГІГ 
     template <typename Key>
     void find(const Key& key)
     {
@@ -109,7 +109,7 @@ public:
         }
     }
 
-    //Изменение значения по ключу, при условии совпадения старого и нового типа значения
+    //Г€Г§Г¬ГҐГ­ГҐГ­ГЁГҐ Г§Г­Г Г·ГҐГ­ГЁГї ГЇГ® ГЄГ«ГѕГ·Гі, ГЇГ°ГЁ ГіГ±Г«Г®ГўГЁГЁ Г±Г®ГўГЇГ Г¤ГҐГ­ГЁГї Г±ГІГ Г°Г®ГЈГ® ГЁ Г­Г®ГўГ®ГЈГ® ГІГЁГЇГ  Г§Г­Г Г·ГҐГ­ГЁГї
     template <typename Key, typename Value>
     void changeValue(const Key& key, const Value& value)
     {
@@ -122,7 +122,7 @@ public:
         }
     }
     
-    //Вывод на печать
+    //Г‚Г»ГўГ®Г¤ Г­Г  ГЇГҐГ·Г ГІГј
     void print()
     {
         for (const auto& elem : maps)
@@ -130,4 +130,4 @@ public:
             elem->print();
         }
     }
-};
+};;
